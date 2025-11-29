@@ -25,69 +25,37 @@ import {
   Clock,
   User,
 } from "lucide-react";
-
-// Mock apartment data
-const apartmentData = {
-  id: 1,
-  title: "Modern 2BR at Bole Japan",
-  location: "Bole Japan, Addis Ababa",
-  address: "Near Bole Japan Traffic Light, Addis Ababa, Ethiopia",
-  site: "bole-japan",
-  neighborhood: "A short walk inside from Bole Japan Traffic Light - quiet residential area with easy access to shops and restaurants",
-  priceUsd: 1600,
-  priceBirr: 45000,
-  minMonths: 6,
-  bedrooms: 2,
-  bathrooms: 1,
-  sqm: 85,
-  description:
-    "Experience comfortable living in this beautifully furnished apartment at our Bole Japan site. Located just a short walk from Bole Japan Traffic Light, this modern 2-bedroom apartment features quality finishes, natural lighting, and all the amenities you need for a comfortable stay. Perfect for professionals and small families looking for a prime location in Addis Ababa.",
-  images: [
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&auto=format&fit=crop",
-  ],
-  amenities: [
-    { icon: Wifi, name: "High-Speed WiFi" },
-    { icon: Shield, name: "24/7 Security Guard" },
-    { icon: Car, name: "Parking Space" },
-    { icon: Waves, name: "Water Tank" },
-    { icon: Dumbbell, name: "Generator Backup" },
-    { icon: Coffee, name: "Common Area" },
-  ],
-  furnishedItems: [
-    "Queen-size bed with mattress",
-    "Sofa set",
-    "Dining table with chairs",
-    "Wardrobe",
-    "TV stand",
-    "Full kitchen equipment",
-    "Linens & towels",
-    "Water heater",
-  ],
-  rules: [
-    "No smoking inside the apartment",
-    "Pets negotiable - ask management",
-    "Quiet hours: 10 PM - 7 AM",
-    "Maximum 4 guests overnight",
-    "Maintain cleanliness in common areas",
-  ],
-  rating: 4.8,
-  reviewCount: 23,
-  host: {
-    name: "Grace Apartments Management",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop",
-    responseTime: "within a few hours",
-    verified: true,
-  },
-};
+import { getApartmentById } from "@/data/apartments";
+import { RentalAgreementModal } from "@/components/RentalAgreementModal";
 
 const ApartmentDetail = () => {
   const { id } = useParams();
+  const apartmentData = getApartmentById(Number(id));
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [stayMonths, setStayMonths] = useState(apartmentData.minMonths);
+  const [stayMonths, setStayMonths] = useState(apartmentData?.minMonths || 6);
+  const [showAgreement, setShowAgreement] = useState(false);
+
+  // If apartment not found, show error
+  if (!apartmentData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-20 pb-12">
+          <div className="container mx-auto px-4 text-center py-16">
+            <h1 className="text-3xl font-bold text-foreground mb-4">Apartment Not Found</h1>
+            <p className="text-muted-foreground mb-6">The apartment you're looking for doesn't exist.</p>
+            <Button variant="hero" asChild>
+              <Link to="/listings">Browse All Apartments</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % apartmentData.images.length);
@@ -100,8 +68,9 @@ const ApartmentDetail = () => {
   };
 
   // Price calculations
+  const EXCHANGE_RATE = 152.10; // 1 USD = 152.10 ETB
   const monthlyRentUsd = apartmentData.priceUsd;
-  const monthlyRentBirr = apartmentData.priceBirr;
+  const monthlyRentBirr = Math.round(monthlyRentUsd * EXCHANGE_RATE);
   const deposit = monthlyRentBirr;
   const serviceFee = Math.round(monthlyRentBirr * 0.1);
   const totalFirst = monthlyRentBirr + deposit + serviceFee;
@@ -140,9 +109,8 @@ const ApartmentDetail = () => {
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentImageIndex ? "bg-card" : "bg-card/50"
-                }`}
+                className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? "bg-card" : "bg-card/50"
+                  }`}
               />
             ))}
           </div>
@@ -247,10 +215,22 @@ const ApartmentDetail = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant="outline" className="mt-6">
+                <Button variant="outline" className="mt-6" onClick={() => setShowAgreement(true)}>
                   <FileText className="w-4 h-4 mr-2" />
                   View Full Rental Agreement
                 </Button>
+
+                <RentalAgreementModal
+                  isOpen={showAgreement}
+                  onOpenChange={setShowAgreement}
+                  apartmentTitle={apartmentData.title}
+                  apartmentLocation={apartmentData.location}
+                  moveInDate={selectedDate?.toLocaleDateString()}
+                  stayMonths={stayMonths}
+                  monthlyRentUsd={monthlyRentUsd}
+                  deposit={deposit}
+                  showAgreeButton={false}
+                />
               </div>
 
               {/* Host */}
@@ -318,11 +298,10 @@ const ApartmentDetail = () => {
                       <button
                         key={months}
                         onClick={() => setStayMonths(months)}
-                        className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
-                          stayMonths === months
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border hover:border-primary/50"
-                        }`}
+                        className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${stayMonths === months
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border hover:border-primary/50"
+                          }`}
                       >
                         {months}
                       </button>
@@ -334,20 +313,35 @@ const ApartmentDetail = () => {
                 <div className="space-y-3 py-4 border-t border-border">
                   <div className="flex justify-between text-foreground">
                     <span>First month rent</span>
-                    <span>{monthlyRentBirr.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div className="font-semibold">${monthlyRentUsd.toLocaleString()} USD</div>
+                      <div className="text-xs text-muted-foreground">({monthlyRentBirr.toLocaleString()} Birr)</div>
+                    </div>
                   </div>
                   <div className="flex justify-between text-foreground">
                     <span>Security deposit</span>
-                    <span>{deposit.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div className="font-semibold">${monthlyRentUsd.toLocaleString()} USD</div>
+                      <div className="text-xs text-muted-foreground">({deposit.toLocaleString()} Birr)</div>
+                    </div>
                   </div>
                   <div className="flex justify-between text-foreground">
                     <span>Service fee</span>
-                    <span>{serviceFee.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div className="font-semibold">${Math.round(monthlyRentUsd * 0.1).toLocaleString()} USD</div>
+                      <div className="text-xs text-muted-foreground">({serviceFee.toLocaleString()} Birr)</div>
+                    </div>
                   </div>
                   <div className="flex justify-between font-semibold text-foreground pt-3 border-t border-border">
                     <span>Due at booking</span>
-                    <span>{totalFirst.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div>${(monthlyRentUsd * 2 + Math.round(monthlyRentUsd * 0.1)).toLocaleString()} USD</div>
+                      <div className="text-xs text-muted-foreground font-normal">({totalFirst.toLocaleString()} Birr)</div>
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground text-center pt-2">
+                    Birr amounts based on today's CBE rate (1 USD = 152.10 ETB)
+                  </p>
                 </div>
 
                 <Button variant="hero" size="lg" className="w-full mt-4" asChild>

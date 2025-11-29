@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,9 +15,15 @@ import {
   Shield,
   Lock,
   UserPlus,
+  Smartphone,
+  Banknote,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Brandmark } from "@/components/Brandmark";
+import { getApartmentById } from "@/data/apartments";
+import { useAuth } from "@/context/AuthContext";
+import { RentalAgreementModal } from "@/components/RentalAgreementModal";
 
 const steps = [
   { id: 1, name: "Dates & Duration", icon: Calendar },
@@ -27,18 +34,25 @@ const steps = [
 ];
 const successStep = steps.length + 1;
 
+type PaymentMethod = "card" | "telebirr" | "cash";
+
 const Booking = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const apartment = getApartmentById(Number(id));
+  const { user, login, addBooking } = useAuth();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
-  const [authCompleted, setAuthCompleted] = useState(false);
-  const [authenticatedEmail, setAuthenticatedEmail] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [telebirrStep, setTelebirrStep] = useState<"input" | "processing" | "success">("input");
+  const [showAgreement, setShowAgreement] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
-    moveInDate: "",
+    moveInDate: new Date().toISOString().split("T")[0],
     stayMonths: 3,
     firstName: "",
     lastName: "",
@@ -49,9 +63,23 @@ const Booking = () => {
     cardNumber: "",
     expiry: "",
     cvc: "",
+    telebirrPhone: "",
     accountEmail: "",
     accountPassword: "",
   });
+
+  // Pre-fill form if user is logged in
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        accountEmail: user.email,
+      }));
+    }
+  }, [user]);
 
   const demoCredentials = useMemo(() => {
     const slug = Math.random().toString(36).slice(2, 8);
@@ -61,66 +89,138 @@ const Booking = () => {
     };
   }, []);
 
-  // Mock apartment data
-  const apartment = {
-    title: "Modern 2BR at Bole Japan",
-    location: "Bole Japan, Addis Ababa",
-    priceUsd: 1600,
-    priceBirr: 45000,
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&auto=format&fit=crop",
-  };
+  // If apartment not found, redirect or show error
+  if (!apartment) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="flex items-center">
+                <Brandmark />
+              </Link>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto text-center py-16">
+            <h1 className="text-3xl font-bold text-foreground mb-4">Apartment Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              The apartment you're trying to book doesn't exist.
+            </p>
+            <Button variant="hero" asChild>
+              <Link to="/listings">Browse All Apartments</Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
+  const EXCHANGE_RATE = 152.10; // 1 USD = 152.10 ETB
   const monthlyRentUsd = apartment.priceUsd;
-  const monthlyRentBirr = apartment.priceBirr;
+  const monthlyRentBirr = Math.round(monthlyRentUsd * EXCHANGE_RATE);
   const deposit = monthlyRentBirr;
   const serviceFee = Math.round(monthlyRentBirr * 0.1);
   const totalFirst = monthlyRentBirr + deposit + serviceFee;
 
   const handleNext = () => {
     if (currentStep < steps.length) {
-      setCurrentStep((prev) => prev + 1);
+      // Skip auth step if already logged in
+      if (currentStep === 2 && user) {
+        setCurrentStep(4);
+      } else {
+        setCurrentStep((prev) => prev + 1);
+      }
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      // Skip auth step if already logged in
+      if (currentStep === 4 && user) {
+        setCurrentStep(2);
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
-  const handleSubmit = async () => {
+  const handleTelebirrPayment = async () => {
     setLoading(true);
+    setTelebirrStep("processing");
+
+    // Simulate USSD Push
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    setTelebirrStep("success");
+    setLoading(false);
+
+    toast({
+      title: "Payment Confirmed",
+      description: "Telebirr payment received successfully.",
+    });
+
+    // Proceed to complete booking after short delay
+    setTimeout(() => {
+      completeBookingProcess();
+    }, 1500);
+  };
+
+  const completeBookingProcess = async () => {
+    // Add booking to context
+    if (user) {
+      addBooking({
+        apartmentId: apartment.id,
+        apartmentTitle: apartment.title,
+        apartmentImage: apartment.images[0],
+        moveInDate: formData.moveInDate || new Date().toISOString(),
+        stayMonths: formData.stayMonths,
+        totalPrice: totalFirst,
+      });
+    }
+    setCurrentStep(successStep);
+  };
+
+  const handleSubmit = async () => {
+    if (paymentMethod === "telebirr") {
+      handleTelebirrPayment();
+      return;
+    }
+
+    setLoading(true);
+    // Simulate API call for Card or Cash
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setLoading(false);
-    setCurrentStep(successStep); // Success state
+    completeBookingProcess();
   };
 
   const handleDemoAuth = () => {
-    setAuthCompleted(true);
-    setAuthenticatedEmail(demoCredentials.email);
-    setFormData((prev) => ({
-      ...prev,
-      email: prev.email || demoCredentials.email,
-      accountEmail: demoCredentials.email,
-      accountPassword: demoCredentials.password,
-    }));
+    // Use demo credentials to login
+    const email = formData.accountEmail || demoCredentials.email;
+    // For demo purposes, we'll extract names from email or use defaults
+    const firstName = formData.firstName || "Guest";
+    const lastName = formData.lastName || "User";
+
+    login(email, firstName, lastName);
+
     toast({
-      title: authMode === "signup" ? "Demo account created" : "Signed in successfully",
-      description: `Authenticated as ${demoCredentials.email}`,
+      title: authMode === "signup" ? "Account created" : "Signed in successfully",
+      description: `Welcome, ${firstName}!`,
     });
   };
 
   const renderStepContent = () => {
     if (currentStep === successStep) {
       return (
-        <div className="text-center py-8">
+        <div className="text-center py-8 animate-fade-in">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
             <Check className="w-10 h-10 text-success" />
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Booking Confirmed!</h2>
           <p className="text-muted-foreground mb-6">
-            Your reservation has been confirmed. Check your email for the confirmation details
-            and rental agreement.
+            Your reservation has been confirmed. Check your email for the confirmation details and
+            rental agreement.
           </p>
           <div className="bg-secondary/50 rounded-xl p-6 text-left mb-6">
             <h3 className="font-semibold text-foreground mb-4">Booking Details</h3>
@@ -138,23 +238,19 @@ const Booking = () => {
                 <span className="text-foreground">{formData.moveInDate || "TBD"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Duration</span>
-                <span className="text-foreground">{formData.stayMonths} months</span>
+                <span className="text-muted-foreground">Payment Method</span>
+                <span className="text-foreground capitalize">
+                  {paymentMethod === "telebirr" ? "Telebirr" : paymentMethod === "cash" ? "Cash on Arrival" : "Credit Card"}
+                </span>
               </div>
-              {authenticatedEmail && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Account</span>
-                  <span className="text-foreground">{authenticatedEmail}</span>
-                </div>
-              )}
             </div>
           </div>
-          <div className="flex gap-4">
-            <Button variant="outline" className="flex-1" asChild>
-              <Link to="/dashboard">Go to Dashboard</Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="outline" asChild>
+              <Link to="/">Return Home</Link>
             </Button>
-            <Button variant="hero" className="flex-1" asChild>
-              <Link to="/">Back to Home</Link>
+            <Button variant="hero" asChild>
+              <Link to="/dashboard">View My Bookings</Link>
             </Button>
           </div>
         </div>
@@ -164,44 +260,42 @@ const Booking = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             <div>
-              <Label htmlFor="moveInDate">Move-in Date</Label>
-              <Input
-                id="moveInDate"
-                type="date"
-                value={formData.moveInDate}
-                onChange={(e) => setFormData({ ...formData, moveInDate: e.target.value })}
-                className="mt-1.5"
-                min={new Date().toISOString().split("T")[0]}
-              />
+              <Label>Move-in Date</Label>
+              <div className="mt-2 p-4 border border-border rounded-xl bg-card">
+                <Calendar className="w-6 h-6 text-primary mb-2" />
+                <Input
+                  type="date"
+                  value={formData.moveInDate}
+                  onChange={(e) => setFormData({ ...formData, moveInDate: e.target.value })}
+                  className="mt-2"
+                />
+              </div>
             </div>
 
             <div>
-              <Label>Stay Duration (months)</Label>
-              <div className="grid grid-cols-4 gap-3 mt-1.5">
+              <Label>Duration of Stay</Label>
+              <div className="grid grid-cols-4 gap-3 mt-2">
                 {[3, 6, 9, 12].map((months) => (
                   <button
                     key={months}
-                    type="button"
                     onClick={() => setFormData({ ...formData, stayMonths: months })}
-                    className={`py-3 rounded-lg border text-center transition-colors ${
-                      formData.stayMonths === months
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`py-3 rounded-xl border text-sm font-medium transition-all ${formData.stayMonths === months
+                      ? "bg-primary text-primary-foreground border-primary shadow-md"
+                      : "bg-card border-border hover:border-primary/50"
+                      }`}
                   >
-                    {months} mo
+                    {months} Months
                   </button>
                 ))}
               </div>
             </div>
           </div>
         );
-
       case 2:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 animate-fade-in">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name</Label>
@@ -224,9 +318,8 @@ const Booking = () => {
                 />
               </div>
             </div>
-
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -236,7 +329,6 @@ const Booking = () => {
                 placeholder="john@example.com"
               />
             </div>
-
             <div>
               <Label htmlFor="phone">Phone Number</Label>
               <Input
@@ -250,74 +342,88 @@ const Booking = () => {
             </div>
           </div>
         );
-
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="bg-secondary/50 rounded-xl p-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Choose whether to sign in or create a Grace Apartments account. We&apos;ll pass the
-                flow automatically with secure demo credentials so you can keep booking.
-              </p>
-              <div className="flex gap-3">
-                {(["signup", "signin"] as const).map((mode) => (
+          <div className="space-y-6 animate-fade-in">
+            {user ? (
+              <div className="bg-success/10 border border-success/20 rounded-xl p-6 text-center">
+                <div className="w-12 h-12 bg-success/20 text-success rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Account Verified</h3>
+                <p className="text-muted-foreground mt-1">
+                  You are signed in as{" "}
+                  <span className="font-medium text-foreground">{user.email}</span>
+                </p>
+                <Button variant="outline" size="sm" onClick={handleNext} className="mt-4">
+                  Continue to Rules
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-card border border-border rounded-xl p-6">
+                <div className="flex gap-4 mb-6 border-b border-border">
                   <button
-                    key={mode}
-                    type="button"
-                    onClick={() => {
-                      setAuthMode(mode);
-                      setAuthCompleted(false);
-                    }}
-                    className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors ${
-                      authMode === mode
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border hover:border-primary/50 text-foreground"
-                    }`}
+                    className={`pb-2 text-sm font-medium transition-colors ${authMode === "signup"
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    onClick={() => setAuthMode("signup")}
                   >
-                    {mode === "signup" ? "Create account" : "Sign in"}
+                    Create Account
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/60 p-6 space-y-4">
-              <div>
-                <p className="text-foreground font-semibold mb-1">
-                  {authMode === "signup" ? "Demo account credentials" : "Demo login credentials"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  We pre-filled a random email and password so you can breeze through authentication.
-                </p>
-              </div>
-
-              <div className="bg-secondary/40 rounded-xl p-4 space-y-2 font-mono text-sm text-foreground">
-                <div>
-                  <span className="text-muted-foreground mr-2">Email:</span>
-                  {demoCredentials.email}
+                  <button
+                    className={`pb-2 text-sm font-medium transition-colors ${authMode === "signin"
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    onClick={() => setAuthMode("signin")}
+                  >
+                    Sign In
+                  </button>
                 </div>
-                <div>
-                  <span className="text-muted-foreground mr-2">Password:</span>
-                  {demoCredentials.password}
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="accountEmail">Email Address</Label>
+                    <Input
+                      id="accountEmail"
+                      type="email"
+                      value={formData.accountEmail}
+                      onChange={(e) => setFormData({ ...formData, accountEmail: e.target.value })}
+                      className="mt-1.5"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="accountPassword">Password</Label>
+                    <Input
+                      id="accountPassword"
+                      type="password"
+                      value={formData.accountPassword}
+                      onChange={(e) =>
+                        setFormData({ ...formData, accountPassword: e.target.value })
+                      }
+                      className="mt-1.5"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <Button className="w-full mt-2" onClick={handleDemoAuth}>
+                    {authMode === "signup" ? "Create Account" : "Sign In"}
+                  </Button>
+
+                  <p className="text-xs text-center text-muted-foreground mt-4">
+                    By continuing, you agree to our Terms of Service and Privacy Policy.
+                  </p>
                 </div>
               </div>
-
-              <Button variant="hero" className="w-full" type="button" onClick={handleDemoAuth}>
-                Use demo credentials
-              </Button>
-
-              {authCompleted && (
-                <div className="flex items-center gap-2 text-success text-sm">
-                  <Check className="w-4 h-4" />
-                  Authenticated as {authenticatedEmail}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         );
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             <div className="bg-secondary/50 rounded-xl p-6">
               <h3 className="font-semibold text-foreground mb-4">House Rules</h3>
               <ul className="space-y-2 text-muted-foreground">
@@ -346,12 +452,25 @@ const Booking = () => {
               <p className="text-muted-foreground text-sm leading-relaxed">
                 By proceeding with this booking, you agree to the standard rental agreement
                 including terms for security deposit, maintenance responsibilities, and lease
-                termination conditions. The full agreement will be sent to your email for
-                review and electronic signature.
+                termination conditions. The full agreement will be sent to your email for review and
+                electronic signature.
               </p>
-              <Button variant="link" className="px-0 mt-2">
+              <Button variant="link" className="px-0 mt-2" onClick={() => setShowAgreement(true)}>
                 Read Full Agreement
               </Button>
+
+              <RentalAgreementModal
+                isOpen={showAgreement}
+                onOpenChange={setShowAgreement}
+                onAgree={() => setFormData((prev) => ({ ...prev, acceptAgreement: true }))}
+                apartmentTitle={apartment.title}
+                apartmentLocation={apartment.location}
+                moveInDate={formData.moveInDate}
+                stayMonths={formData.stayMonths}
+                monthlyRentUsd={monthlyRentUsd}
+                deposit={deposit}
+                tenantName={`${formData.firstName} ${formData.lastName}`}
+              />
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer">
@@ -370,63 +489,198 @@ const Booking = () => {
 
       case 5:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
               <Lock className="w-4 h-4" />
               Your payment information is encrypted and secure
             </div>
 
-            <div>
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <Input
-                id="cardNumber"
-                value={formData.cardNumber}
-                onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value })}
-                className="mt-1.5"
-                placeholder="4242 4242 4242 4242"
-              />
-            </div>
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+              className="grid grid-cols-3 gap-4 mb-6"
+            >
+              <div>
+                <RadioGroupItem value="card" id="card" className="peer sr-only" />
+                <Label
+                  htmlFor="card"
+                  className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                >
+                  <CreditCard className="mb-3 h-6 w-6" />
+                  Credit Card
+                </Label>
+              </div>
+              <div>
+                <RadioGroupItem value="telebirr" id="telebirr" className="peer sr-only" />
+                <Label
+                  htmlFor="telebirr"
+                  className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                >
+                  <Smartphone className="mb-3 h-6 w-6" />
+                  Telebirr
+                </Label>
+              </div>
+              <div>
+                <RadioGroupItem value="cash" id="cash" className="peer sr-only" />
+                <Label
+                  htmlFor="cash"
+                  className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                >
+                  <Banknote className="mb-3 h-6 w-6" />
+                  Cash on Arrival
+                </Label>
+              </div>
+            </RadioGroup>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="expiry">Expiry Date</Label>
-                <Input
-                  id="expiry"
-                  value={formData.expiry}
-                  onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
-                  className="mt-1.5"
-                  placeholder="MM/YY"
-                />
+            {paymentMethod === "card" && (
+              <div className="space-y-4 animate-fade-in">
+                <div>
+                  <Label htmlFor="cardNumber">Card Number</Label>
+                  <Input
+                    id="cardNumber"
+                    value={formData.cardNumber}
+                    onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value })}
+                    className="mt-1.5"
+                    placeholder="4242 4242 4242 4242"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      value={formData.expiry}
+                      onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
+                      className="mt-1.5"
+                      placeholder="MM/YY"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cvc">CVC</Label>
+                    <Input
+                      id="cvc"
+                      value={formData.cvc}
+                      onChange={(e) => setFormData({ ...formData, cvc: e.target.value })}
+                      className="mt-1.5"
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="cvc">CVC</Label>
-                <Input
-                  id="cvc"
-                  value={formData.cvc}
-                  onChange={(e) => setFormData({ ...formData, cvc: e.target.value })}
-                  className="mt-1.5"
-                  placeholder="123"
-                />
+            )}
+
+            {paymentMethod === "telebirr" && (
+              <div className="space-y-4 animate-fade-in">
+                {telebirrStep === "input" && (
+                  <>
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm text-primary">
+                      <p>Enter your Telebirr number. We will send a USSD push notification to your phone to complete the payment.</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="telebirrPhone">Telebirr Number</Label>
+                      <Input
+                        id="telebirrPhone"
+                        type="tel"
+                        value={formData.telebirrPhone}
+                        onChange={(e) => setFormData({ ...formData, telebirrPhone: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="0911234567"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {telebirrStep === "processing" && (
+                  <div className="text-center py-8">
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                      <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                      <Smartphone className="absolute inset-0 m-auto w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">Check your phone</h3>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                      We've sent a payment request to {formData.telebirrPhone}. Please enter your PIN to confirm.
+                    </p>
+                  </div>
+                )}
+
+                {telebirrStep === "success" && (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-semibold text-lg text-success">Payment Successful!</h3>
+                    <p className="text-muted-foreground text-sm">Redirecting to confirmation...</p>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {paymentMethod === "cash" && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="bg-secondary/50 border border-border rounded-xl p-4">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Banknote className="w-4 h-4 text-primary" />
+                    Pay on Arrival
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    You can pay the full amount in cash (USD or ETB) when you arrive at the property.
+                    Please note that your reservation is held for 24 hours after your scheduled move-in time.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
               <div className="flex justify-between text-foreground">
                 <span>First month rent</span>
-                <span>{monthlyRentBirr.toLocaleString()} ETB</span>
+                <div className="text-right">
+                  <div className="font-semibold">${monthlyRentUsd.toLocaleString()} USD</div>
+                  <div className="text-xs text-muted-foreground">
+                    ({monthlyRentBirr.toLocaleString()} Birr)
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between text-foreground">
                 <span>Security deposit</span>
-                <span>{deposit.toLocaleString()} ETB</span>
+                <div className="text-right">
+                  <div className="font-semibold">${monthlyRentUsd.toLocaleString()} USD</div>
+                  <div className="text-xs text-muted-foreground">
+                    ({deposit.toLocaleString()} Birr)
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between text-foreground">
                 <span>Service fee</span>
-                <span>{serviceFee.toLocaleString()} ETB</span>
+                <div className="text-right">
+                  <div className="font-semibold">
+                    ${Math.round(monthlyRentUsd * 0.1).toLocaleString()} USD
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    ({serviceFee.toLocaleString()} Birr)
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between font-semibold text-foreground pt-2 border-t border-border">
                 <span>Total due today</span>
-                <span>{totalFirst.toLocaleString()} ETB</span>
+                <div className="text-right">
+                  <div>
+                    $
+                    {(
+                      monthlyRentUsd * 2 +
+                      Math.round(monthlyRentUsd * 0.1)
+                    ).toLocaleString()}{" "}
+                    USD
+                  </div>
+                  <div className="text-xs text-muted-foreground font-normal">
+                    ({totalFirst.toLocaleString()} Birr)
+                  </div>
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Birr amounts based on today's CBE rate (1 USD = 152.10 ETB)
+              </p>
             </div>
           </div>
         );
@@ -465,11 +719,10 @@ const Booking = () => {
                   {steps.map((step, index) => (
                     <div key={step.id} className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                          currentStep >= step.id
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-border text-muted-foreground"
-                        }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${currentStep >= step.id
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "border-border text-muted-foreground"
+                          }`}
                       >
                         {currentStep > step.id ? (
                           <Check className="w-5 h-5" />
@@ -479,9 +732,8 @@ const Booking = () => {
                       </div>
                       {index < steps.length - 1 && (
                         <div
-                          className={`w-24 h-0.5 mx-2 transition-colors ${
-                            currentStep > step.id ? "bg-primary" : "bg-border"
-                          }`}
+                          className={`w-24 h-0.5 mx-2 transition-colors ${currentStep > step.id ? "bg-primary" : "bg-border"
+                            }`}
                         />
                       )}
                     </div>
@@ -491,9 +743,8 @@ const Booking = () => {
                   {steps.map((step) => (
                     <span
                       key={step.id}
-                      className={`text-xs ${
-                        currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                      }`}
+                      className={`text-xs ${currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+                        }`}
                     >
                       {step.name}
                     </span>
@@ -527,7 +778,12 @@ const Booking = () => {
                         variant="hero"
                         className="ml-auto"
                         onClick={handleNext}
-                        disabled={currentStep === 3 && !authCompleted}
+                        disabled={
+                          (currentStep === 1 && !formData.moveInDate) ||
+                          (currentStep === 2 && (!formData.firstName || !formData.lastName || !formData.email)) ||
+                          (currentStep === 3 && !user) ||
+                          (currentStep === 4 && (!formData.acceptRules || !formData.acceptAgreement))
+                        }
                       >
                         Continue
                         <ArrowRight className="w-4 h-4 ml-2" />
@@ -539,12 +795,20 @@ const Booking = () => {
                         onClick={handleSubmit}
                         disabled={
                           loading ||
-                          !formData.acceptRules ||
-                          !formData.acceptAgreement ||
-                          !authCompleted
+                          (paymentMethod === "telebirr" && telebirrStep !== "input") ||
+                          (paymentMethod === "telebirr" && !formData.telebirrPhone)
                         }
                       >
-                        {loading ? "Processing..." : "Complete Booking"}
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : paymentMethod === "telebirr" ? (
+                          "Pay with Telebirr"
+                        ) : (
+                          "Complete Booking"
+                        )}
                       </Button>
                     )}
                   </div>
@@ -557,7 +821,7 @@ const Booking = () => {
               <div className="lg:col-span-1">
                 <div className="bg-card rounded-2xl p-6 border border-border/50 sticky top-24">
                   <img
-                    src={apartment.image}
+                    src={apartment.images[0]}
                     alt={apartment.title}
                     className="w-full h-40 object-cover rounded-xl mb-4"
                   />
@@ -579,7 +843,9 @@ const Booking = () => {
                   <div className="space-y-2 pt-4 border-t border-border">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Monthly rent</span>
-                      <span className="text-foreground">{monthlyRentBirr.toLocaleString()} ETB</span>
+                      <span className="text-foreground">
+                        {monthlyRentBirr.toLocaleString()} ETB
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Duration</span>

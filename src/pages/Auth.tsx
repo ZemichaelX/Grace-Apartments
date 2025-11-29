@@ -1,17 +1,27 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Brandmark } from "@/components/Brandmark";
+import { useAuth } from "@/context/AuthContext";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { login, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,14 +36,23 @@ const Auth = () => {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    // Perform login
+    // For signup, we'd typically have a separate flow, but for this demo
+    // we'll just log them in with the provided details
+    const firstName = formData.name.split(" ")[0] || "User";
+    const lastName = formData.name.split(" ").slice(1).join(" ") || "";
+
+    login(formData.email, firstName, lastName);
+
     toast({
       title: isLogin ? "Welcome back!" : "Account created!",
       description: isLogin
         ? "You have successfully logged in."
-        : "Please check your email to verify your account.",
+        : "Your account has been created successfully.",
     });
 
     setLoading(false);
+    navigate("/dashboard");
   };
 
   return (
