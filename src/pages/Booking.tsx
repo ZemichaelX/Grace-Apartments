@@ -745,9 +745,9 @@ const Booking = () => {
           {currentStep < successStep && (
             <>
               {/* Enhanced Progress Steps with Percentage */}
-              <div className="mb-12 relative">
-                {/* Progress Percentage Circle */}
-                <div className="flex justify-center mb-8">
+              <div className="mb-8 md:mb-12 relative">
+                {/* Progress Percentage Circle - Hidden on mobile */}
+                <div className="hidden md:flex justify-center mb-8">
                   <div className="relative w-32 h-32">
                     <svg className="w-full h-full -rotate-90">
                       <circle
@@ -780,20 +780,20 @@ const Booking = () => {
                 </div>
 
                 {/* Step Indicators */}
-                <div className="flex items-center justify-between max-w-2xl mx-auto">
+                <div className="flex items-center justify-between max-w-2xl mx-auto px-2">
                   {steps.map((step, index) => (
                     <div key={step.id} className="flex items-center">
                       <div className="flex flex-col items-center relative">
                         <div
-                          className={`flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 shadow-lg ${currentStep >= step.id
-                            ? "bg-primary border-primary text-primary-foreground scale-110"
-                            : "border-border text-muted-foreground bg-background"
-                            } ${currentStep === step.id ? "ring-4 ring-primary/20 animate-pulse" : ""}`}
+                          className={`flex items-center justify-center w-10 h-10 md:w-14 md:h-14 rounded-full border-2 transition-all duration-300 shadow-lg ${currentStep >= step.id
+                              ? "bg-primary border-primary text-primary-foreground md:scale-110"
+                              : "border-border text-muted-foreground bg-background"
+                            } ${currentStep === step.id ? "ring-2 md:ring-4 ring-primary/20" : ""}`}
                         >
                           {currentStep > step.id ? (
-                            <Check className="w-6 h-6 animate-in zoom-in duration-300" />
+                            <Check className="w-4 h-4 md:w-6 md:h-6 animate-in zoom-in duration-300" />
                           ) : (
-                            <step.icon className="w-6 h-6" />
+                            <step.icon className="w-4 h-4 md:w-6 md:h-6" />
                           )}
                         </div>
                         <span
@@ -804,8 +804,8 @@ const Booking = () => {
                         </span>
                       </div>
                       {index < steps.length - 1 && (
-                        <div className="relative flex-1 mx-2" style={{ width: '60px' }}>
-                          <div className="h-1 bg-border rounded-full overflow-hidden">
+                        <div className="relative flex-1 mx-1 md:mx-2" style={{ width: '30px', maxWidth: '60px' }}>
+                          <div className="h-0.5 md:h-1 bg-border rounded-full overflow-hidden">
                             <div
                               className={`h-full bg-primary transition-all duration-500 ease-out ${currentStep > step.id ? "w-full" : "w-0"
                                 }`}
