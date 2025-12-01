@@ -55,18 +55,21 @@ const amenities = [
 
 const AmenitiesSection = () => {
   return (
-    <section id="amenities" className="py-24 bg-[#0f172a] text-white relative overflow-hidden">
+    <section id="amenities" className="py-24 bg-foreground text-background relative overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl bg-background/5 blur-[120px] rounded-full pointer-events-none" />
+
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-20">
-          <span className="text-primary font-medium text-sm uppercase tracking-wider">Everything You Need</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mt-2 mb-4">
+          <span className="text-background/80 font-medium text-sm uppercase tracking-wider">Everything You Need</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-background mt-2 mb-4">
             Premium Amenities Included
           </h2>
-          <p className="text-white/60 max-w-2xl mx-auto text-lg">
+          <p className="text-background/60 max-w-2xl mx-auto text-lg">
             Designed for your comfort. Enjoy a hotel-like experience with the privacy of a home.
           </p>
         </div>
@@ -79,11 +82,11 @@ const AmenitiesSection = () => {
               className="group flex flex-col items-center text-center"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <amenity.icon className="w-8 h-8 text-white group-hover:text-white transition-colors duration-300" />
+              <div className="w-16 h-16 rounded-2xl bg-background/5 border border-background/10 flex items-center justify-center mb-5 group-hover:bg-background/10 group-hover:border-background/20 group-hover:scale-110 transition-all duration-300 shadow-lg backdrop-blur-sm">
+                <amenity.icon className="w-8 h-8 text-background group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="font-semibold text-white mb-2 text-lg">{amenity.title}</h3>
-              <p className="text-sm text-white/50 leading-relaxed max-w-[160px]">{amenity.description}</p>
+              <h3 className="font-semibold text-background mb-2 text-lg">{amenity.title}</h3>
+              <p className="text-sm text-background/50 leading-relaxed max-w-[160px]">{amenity.description}</p>
             </div>
           ))}
         </div>
