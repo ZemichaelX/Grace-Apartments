@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -36,6 +36,11 @@ const ApartmentDetail = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [stayMonths, setStayMonths] = useState(apartmentData?.minMonths || 6);
   const [showAgreement, setShowAgreement] = useState(false);
+
+  // Scroll to top when component mounts or ID changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [id]);
 
   // If apartment not found, show error
   if (!apartmentData) {

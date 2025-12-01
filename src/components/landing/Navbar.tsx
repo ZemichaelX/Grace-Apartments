@@ -30,6 +30,35 @@ const Navbar = () => {
     navLinks.push({ name: "Dashboard", path: "/dashboard" });
   }
 
+  // Handle smooth scrolling for hash links
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (path.startsWith("/#")) {
+      e.preventDefault();
+      const sectionId = path.substring(2); // Remove "/#"
+
+      // If we're not on the home page, navigate there first
+      if (location.pathname !== "/") {
+        window.location.href = path;
+        return;
+      }
+
+      // Smooth scroll to section
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const navbarHeight = 80; // Height of fixed navbar
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+
+      setIsMobileMenuOpen(false);
+    }
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
@@ -47,6 +76,7 @@ const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.path}
+                onClick={(e) => handleNavClick(e, link.path)}
                 className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === link.path ? "text-primary" : "text-foreground/80"
                   }`}
               >
@@ -86,7 +116,12 @@ const Navbar = () => {
                 key={link.name}
                 to={link.path}
                 className="text-foreground/80 hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={(e) => {
+                  handleNavClick(e, link.path);
+                  if (!link.path.startsWith("/#")) {
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
               >
                 {link.name}
               </Link>
