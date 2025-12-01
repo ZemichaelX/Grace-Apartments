@@ -307,7 +307,7 @@ const Booking = () => {
 
             <div>
               <Label>Duration of Stay</Label>
-              <div className="grid grid-cols-4 gap-3 mt-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
                 {[3, 6, 9, 12].map((months) => (
                   <button
                     key={months}
@@ -722,13 +722,13 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center">
-              <Brandmark />
+              <Brandmark className="scale-75 md:scale-100 origin-left" />
             </Link>
             <Link
               to={`/apartment/${id}`}
@@ -740,7 +740,7 @@ const Booking = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 md:px-4 py-6 md:py-8">
         <div className="max-w-4xl mx-auto">
           {currentStep < successStep && (
             <>
@@ -786,8 +786,8 @@ const Booking = () => {
                       <div className="flex flex-col items-center relative">
                         <div
                           className={`flex items-center justify-center w-10 h-10 md:w-14 md:h-14 rounded-full border-2 transition-all duration-300 shadow-lg ${currentStep >= step.id
-                              ? "bg-primary border-primary text-primary-foreground md:scale-110"
-                              : "border-border text-muted-foreground bg-background"
+                            ? "bg-primary border-primary text-primary-foreground md:scale-110"
+                            : "border-border text-muted-foreground bg-background"
                             } ${currentStep === step.id ? "ring-2 md:ring-4 ring-primary/20" : ""}`}
                         >
                           {currentStep > step.id ? (
@@ -820,10 +820,10 @@ const Booking = () => {
             </>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             {/* Form */}
             <div className={`${currentStep === successStep ? "lg:col-span-3" : "lg:col-span-2"}`}>
-              <div className="bg-card/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 shadow-xl relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
+              <div className="bg-card/80 backdrop-blur-xl rounded-3xl p-5 md:p-8 border border-border/50 shadow-xl relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 {/* Decorative gradient background */}
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
