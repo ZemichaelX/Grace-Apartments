@@ -1,99 +1,96 @@
-import { ShieldCheck, BadgeCheck, HeadphonesIcon, Wallet, Clock, Award } from "lucide-react";
+import { ShieldCheck, BadgeCheck, HeadphonesIcon, Wallet, Clock, Award, CheckCircle2 } from "lucide-react";
 
 const features = [
   {
     icon: BadgeCheck,
     title: "Verified Listings",
-    description: "Every apartment is personally verified by our team to ensure quality and accuracy of listings.",
+    description: "Every apartment is personally verified by our team to ensure quality.",
   },
   {
     icon: ShieldCheck,
     title: "Secure Payments",
-    description: "Your payments are protected with bank-level encryption and secure payment processing.",
+    description: "Bank-level encryption protects your financial data.",
   },
   {
     icon: HeadphonesIcon,
     title: "24/7 Support",
-    description: "Our dedicated support team is available around the clock to assist with any questions.",
+    description: "Dedicated support team available around the clock.",
   },
   {
     icon: Wallet,
     title: "Transparent Pricing",
-    description: "No hidden fees. What you see is what you pay, with clear breakdowns of all costs.",
+    description: "No hidden fees. Clear breakdown of all costs.",
   },
   {
     icon: Clock,
     title: "Flexible Terms",
-    description: "From short-term stays to long-term leases, find options that fit your timeline.",
+    description: "Short-term to long-term options to fit your timeline.",
   },
   {
     icon: Award,
     title: "Quality Guarantee",
-    description: "Not satisfied? We'll help you find an alternative or offer a full refund.",
+    description: "Satisfaction guaranteed or we'll make it right.",
   },
 ];
 
 const WhyChooseUs = () => {
   return (
-    <section className="py-20 bg-primary/5 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-      </div>
+    <section className="py-24 bg-secondary/30 relative overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col lg:flex-row items-center gap-16">
 
-      <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <span className="text-primary font-medium text-sm uppercase tracking-wider">Why Grace Apartments</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-4">
-            The Smart Choice for Renters
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            We've built our platform with your needs in mind. Here's why thousands of renters choose Grace Apartments.
-          </p>
-        </div>
+          {/* Left Side - Image */}
+          <div className="w-full lg:w-1/2 relative">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/5] lg:aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop&q=80"
+                alt="Happy residents"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 border border-border/50 hover:border-primary/30 hover:shadow-elevated transition-all duration-300 group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              {/* Floating Badge */}
+              <div className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl text-white">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">#1 Trusted Platform</p>
+                    <p className="text-white/80 text-sm">Voted by thousands of renters in Addis Ababa.</p>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Trust Badges */}
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-8 opacity-60">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-foreground">3</p>
-            <p className="text-sm text-muted-foreground">Prime Locations</p>
+            {/* Decorative Elements */}
+            <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl -z-10" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl -z-10" />
           </div>
-          <div className="h-12 w-px bg-border" />
-          <div className="text-center">
-            <p className="text-3xl font-bold text-foreground">50+</p>
-            <p className="text-sm text-muted-foreground">Happy Tenants</p>
-          </div>
-          <div className="h-12 w-px bg-border" />
-          <div className="text-center">
-            <p className="text-3xl font-bold text-foreground">100%</p>
-            <p className="text-sm text-muted-foreground">Furnished</p>
-          </div>
-          <div className="h-12 w-px bg-border" />
-          <div className="text-center">
-            <p className="text-3xl font-bold text-foreground">0</p>
-            <p className="text-sm text-muted-foreground">Hidden Fees</p>
+
+          {/* Right Side - Content */}
+          <div className="w-full lg:w-1/2">
+            <span className="text-primary font-medium text-sm uppercase tracking-wider">Why Grace Apartments</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-6">
+              The Smart Choice for Renters
+            </h2>
+            <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
+              We've built our platform with your needs in mind. Experience a hassle-free rental process designed for modern living.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+              {features.map((feature) => (
+                <div key={feature.title} className="flex gap-4 group">
+                  <div className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center shrink-0 group-hover:border-primary group-hover:text-primary transition-colors duration-300 shadow-sm">
+                    <feature.icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
