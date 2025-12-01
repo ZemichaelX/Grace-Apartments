@@ -215,4 +215,19 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
+
+  .animate-confetti {
+    animation: confetti linear forwards;
+  }
+
+  @keyframes confetti {
+    0% {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-500px) rotate(360deg);
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -213,44 +213,75 @@ const Booking = () => {
   const renderStepContent = () => {
     if (currentStep === successStep) {
       return (
-        <div className="text-center py-8 animate-fade-in">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
-            <Check className="w-10 h-10 text-success" />
+        <div className="text-center py-12 animate-in fade-in zoom-in duration-700 relative">
+          {/* Celebration Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-2 h-2 bg-primary rounded-full opacity-0 animate-confetti"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 1}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`,
+                }}
+              />
+            ))}
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Booking Confirmed!</h2>
-          <p className="text-muted-foreground mb-6">
-            Your reservation has been confirmed. Check your email for the confirmation details and
-            rental agreement.
+
+          {/* Success Icon with Animation */}
+          <div className="relative inline-block mb-8">
+            <div className="absolute inset-0 bg-success/20 rounded-full animate-ping" />
+            <div className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-success to-success/80 flex items-center justify-center shadow-2xl ring-8 ring-success/20">
+              <Check className="w-16 h-16 text-white animate-in zoom-in duration-500 delay-300" strokeWidth={3} />
+            </div>
+          </div>
+
+          <h2 className="text-4xl font-bold text-foreground mb-3 animate-in slide-in-from-bottom duration-500 delay-500">
+            Booking Confirmed! 🎉
+          </h2>
+          <p className="text-muted-foreground text-lg mb-10 max-w-md mx-auto animate-in slide-in-from-bottom duration-500 delay-700">
+            Your reservation has been confirmed. Check your email for the confirmation details and rental agreement.
           </p>
-          <div className="bg-secondary/50 rounded-xl p-6 text-left mb-6">
-            <h3 className="font-semibold text-foreground mb-4">Booking Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Confirmation #</span>
-                <span className="text-foreground font-medium">GA-2024-001234</span>
+
+          <div className="bg-gradient-to-br from-secondary/50 to-secondary/30 backdrop-blur-sm rounded-2xl p-8 text-left mb-8 border border-border/50 shadow-lg animate-in slide-in-from-bottom duration-500 delay-900">
+            <h3 className="font-bold text-lg text-foreground mb-6 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-primary" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Property</span>
-                <span className="text-foreground">{apartment.title}</span>
+              Booking Details
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 rounded-xl bg-background/50">
+                <span className="text-muted-foreground font-medium">Confirmation #</span>
+                <span className="text-foreground font-bold">GA-2024-001234</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Move-in Date</span>
-                <span className="text-foreground">{formData.moveInDate || "TBD"}</span>
+              <div className="flex justify-between items-center p-3 rounded-xl bg-background/50">
+                <span className="text-muted-foreground font-medium">Property</span>
+                <span className="text-foreground font-semibold">{apartment.title}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Payment Method</span>
-                <span className="text-foreground capitalize">
+              <div className="flex justify-between items-center p-3 rounded-xl bg-background/50">
+                <span className="text-muted-foreground font-medium">Move-in Date</span>
+                <span className="text-foreground font-semibold">{formData.moveInDate || "TBD"}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded-xl bg-background/50">
+                <span className="text-muted-foreground font-medium">Payment Method</span>
+                <span className="text-foreground font-semibold capitalize">
                   {paymentMethod === "telebirr" ? "Telebirr" : paymentMethod === "cash" ? "Cash on Arrival" : "Credit Card"}
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" asChild>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in slide-in-from-bottom duration-500 delay-1000">
+            <Button variant="outline" asChild size="lg">
               <Link to="/">Return Home</Link>
             </Button>
-            <Button variant="hero" asChild>
-              <Link to="/dashboard">View My Bookings</Link>
+            <Button variant="hero" asChild size="lg" className="group">
+              <Link to="/dashboard">
+                View My Bookings
+                <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -713,41 +744,76 @@ const Booking = () => {
         <div className="max-w-4xl mx-auto">
           {currentStep < successStep && (
             <>
-              {/* Progress Steps */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between">
+              {/* Enhanced Progress Steps with Percentage */}
+              <div className="mb-12 relative">
+                {/* Progress Percentage Circle */}
+                <div className="flex justify-center mb-8">
+                  <div className="relative w-32 h-32">
+                    <svg className="w-full h-full -rotate-90">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="60"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        className="text-border"
+                      />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="60"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 60}`}
+                        strokeDashoffset={`${2 * Math.PI * 60 * (1 - currentStep / steps.length)}`}
+                        className="text-primary transition-all duration-500 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-bold text-primary">{Math.round((currentStep / steps.length) * 100)}%</span>
+                      <span className="text-xs text-muted-foreground">Complete</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step Indicators */}
+                <div className="flex items-center justify-between max-w-2xl mx-auto">
                   {steps.map((step, index) => (
                     <div key={step.id} className="flex items-center">
-                      <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${currentStep >= step.id
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-border text-muted-foreground"
-                          }`}
-                      >
-                        {currentStep > step.id ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          <step.icon className="w-5 h-5" />
-                        )}
+                      <div className="flex flex-col items-center relative">
+                        <div
+                          className={`flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-300 shadow-lg ${currentStep >= step.id
+                            ? "bg-primary border-primary text-primary-foreground scale-110"
+                            : "border-border text-muted-foreground bg-background"
+                            } ${currentStep === step.id ? "ring-4 ring-primary/20 animate-pulse" : ""}`}
+                        >
+                          {currentStep > step.id ? (
+                            <Check className="w-6 h-6 animate-in zoom-in duration-300" />
+                          ) : (
+                            <step.icon className="w-6 h-6" />
+                          )}
+                        </div>
+                        <span
+                          className={`text-xs mt-2 font-medium transition-colors hidden md:block ${currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+                            }`}
+                        >
+                          {step.name}
+                        </span>
                       </div>
                       {index < steps.length - 1 && (
-                        <div
-                          className={`w-24 h-0.5 mx-2 transition-colors ${currentStep > step.id ? "bg-primary" : "bg-border"
-                            }`}
-                        />
+                        <div className="relative flex-1 mx-2" style={{ width: '60px' }}>
+                          <div className="h-1 bg-border rounded-full overflow-hidden">
+                            <div
+                              className={`h-full bg-primary transition-all duration-500 ease-out ${currentStep > step.id ? "w-full" : "w-0"
+                                }`}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
-                  ))}
-                </div>
-                <div className="flex justify-between mt-2">
-                  {steps.map((step) => (
-                    <span
-                      key={step.id}
-                      className={`text-xs ${currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                        }`}
-                    >
-                      {step.name}
-                    </span>
                   ))}
                 </div>
               </div>
@@ -757,80 +823,104 @@ const Booking = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Form */}
             <div className={`${currentStep === successStep ? "lg:col-span-3" : "lg:col-span-2"}`}>
-              <div className="bg-card rounded-2xl p-8 border border-border/50">
-                {currentStep < successStep && (
-                  <h2 className="text-xl font-semibold text-foreground mb-6">
-                    {steps[currentStep - 1]?.name}
-                  </h2>
-                )}
-                {renderStepContent()}
+              <div className="bg-card/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 shadow-xl relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                {/* Decorative gradient background */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
-                {currentStep < successStep && (
-                  <div className="flex gap-4 mt-8 pt-6 border-t border-border">
-                    {currentStep > 1 && (
-                      <Button variant="outline" onClick={handleBack}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                      </Button>
-                    )}
-                    {currentStep < steps.length ? (
-                      <Button
-                        variant="hero"
-                        className="ml-auto"
-                        onClick={handleNext}
-                        disabled={
-                          (currentStep === 1 && !formData.moveInDate) ||
-                          (currentStep === 2 && (!formData.firstName || !formData.lastName || !formData.email)) ||
-                          (currentStep === 3 && !user) ||
-                          (currentStep === 4 && (!formData.acceptRules || !formData.acceptAgreement))
-                        }
-                      >
-                        Continue
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="hero"
-                        className="ml-auto"
-                        onClick={handleSubmit}
-                        disabled={
-                          loading ||
-                          (paymentMethod === "telebirr" && telebirrStep !== "input") ||
-                          (paymentMethod === "telebirr" && !formData.telebirrPhone)
-                        }
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : paymentMethod === "telebirr" ? (
-                          "Pay with Telebirr"
-                        ) : (
-                          "Complete Booking"
-                        )}
-                      </Button>
-                    )}
+                <div className="relative z-10">
+                  {currentStep < successStep && (
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          {React.createElement(steps[currentStep - 1]?.icon, { className: "w-5 h-5 text-primary" })}
+                        </div>
+                        {steps[currentStep - 1]?.name}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Step {currentStep} of {steps.length}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="animate-in fade-in slide-in-from-right-5 duration-500">
+                    {renderStepContent()}
                   </div>
-                )}
+
+                  {currentStep < successStep && (
+                    <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
+                      {currentStep > 1 && (
+                        <Button variant="outline" onClick={handleBack} className="group">
+                          <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+                          Back
+                        </Button>
+                      )}
+                      {currentStep < steps.length ? (
+                        <Button
+                          variant="hero"
+                          className="ml-auto group"
+                          onClick={handleNext}
+                          disabled={
+                            (currentStep === 1 && !formData.moveInDate) ||
+                            (currentStep === 2 && (!formData.firstName || !formData.lastName || !formData.email)) ||
+                            (currentStep === 3 && !user) ||
+                            (currentStep === 4 && (!formData.acceptRules || !formData.acceptAgreement))
+                          }
+                        >
+                          Continue
+                          <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="hero"
+                          className="ml-auto"
+                          onClick={handleSubmit}
+                          disabled={
+                            loading ||
+                            (paymentMethod === "telebirr" && telebirrStep !== "input") ||
+                            (paymentMethod === "telebirr" && !formData.telebirrPhone)
+                          }
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Processing...
+                            </>
+                          ) : paymentMethod === "telebirr" ? (
+                            "Pay with Telebirr"
+                          ) : (
+                            "Complete Booking"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Apartment Summary */}
+            {/* Apartment Summary - Enhanced Sticky Sidebar */}
             {currentStep < successStep && (
               <div className="lg:col-span-1">
-                <div className="bg-card rounded-2xl p-6 border border-border/50 sticky top-24">
+                <div className="bg-card/80 backdrop-blur-xl rounded-3xl p-6 border border-border/50 shadow-xl sticky top-24 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -z-10" />
                   <img
                     src={apartment.images[0]}
                     alt={apartment.title}
-                    className="w-full h-40 object-cover rounded-xl mb-4"
+                    className="w-full h-48 object-cover rounded-2xl mb-4 ring-1 ring-border/50"
                   />
-                  <h3 className="font-semibold text-foreground mb-1">{apartment.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{apartment.location}</p>
+                  <h3 className="font-bold text-lg text-foreground mb-1">{apartment.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-6 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {apartment.location}
+                  </p>
 
-                  <div className="mb-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-foreground">
+                  <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-4 mb-4">
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-3xl font-bold text-foreground">
                         ${monthlyRentUsd.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground text-sm">USD / month</span>
@@ -840,16 +930,19 @@ const Booking = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-2 pt-4 border-t border-border">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Monthly rent</span>
-                      <span className="text-foreground">
-                        {monthlyRentBirr.toLocaleString()} ETB
+                  <div className="space-y-3 pt-4 border-t border-border/50">
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Duration
                       </span>
+                      <span className="text-foreground font-semibold">{formData.stayMonths} months</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Duration</span>
-                      <span className="text-foreground">{formData.stayMonths} months</span>
+                      <span className="text-muted-foreground">Monthly rent</span>
+                      <span className="text-foreground font-medium">
+                        {monthlyRentBirr.toLocaleString()} ETB
+                      </span>
                     </div>
                   </div>
                 </div>
