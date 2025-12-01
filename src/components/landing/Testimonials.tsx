@@ -15,10 +15,10 @@ const testimonials = [
     id: 2,
     name: "Daniel Bekele",
     role: "IT Consultant",
-    location: "Bole-Sapphire",
+    location: "Summit Fiyel Bet",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop",
     rating: 5,
-    text: "The Bole-Sapphire location is excellent - right beside Sapphire Hotel and easy access to Bole Medhanialem. The team was very professional and responsive throughout.",
+    text: "The Summit location is excellent - right beside the convention center and easy access to the city biggest malls. The team was very professional and responsive throughout.",
   },
   {
     id: 3,
